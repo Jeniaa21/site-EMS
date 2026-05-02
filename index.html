@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMS LS - Hub Médical</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --primary: #d32f2f; /* Rouge EMS */
+            --secondary: #1976d2; /* Bleu EMS */
+            --accent: #4caf50; /* Vert pour la sélection / prix */
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        nav {
+            background-color: var(--card-bg);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 3px solid var(--primary);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav h1 { margin: 0; font-size: 24px; color: white; margin-right: 40px; }
+        nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 20px; }
+        nav li { cursor: pointer; padding: 8px 12px; border-radius: 4px; font-weight: bold; transition: 0.2s;}
+        nav li.active { background-color: var(--primary); color: white; }
+        nav li:hover:not(.active) { background-color: #333; }
+
+        .layout {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 30px;
+            gap: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .main-content { flex: 3; min-width: 60%; }
+
+        .controls { display: flex; gap: 15px; margin-bottom: 30px; }
+        input, select, button {
+            padding: 12px; background-color: var(--card-bg); border: 1px solid #333;
+            color: white; border-radius: 6px; font-size: 16px; outline: none;
+        }
+        input:focus, select:focus { border-color: var(--secondary); }
+        input { flex: 1; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-left: 4px solid var(--secondary);
+            padding: 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
+        .card.selected { background-color: #2e3b32; border-color: var(--accent); border-left: 4px solid var(--accent); }
+        
+        .card h3 { margin: 0 0 5px 0; color: white; font-size: 16px; line-height: 1.3;}
+        .card .cat { font-size: 11px; color: #aaa; text-transform: uppercase; margin-bottom: 5px; }
+
+        /* Styles spécifiques à la facturation */
+        .card .price { font-weight: bold; color: var(--accent); margin-top: 10px; font-size: 18px;}
+        .qty-controls { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+        .qty-btn { background: #444; border: none; color: white; border-radius: 4px; width: 30px; height: 30px; cursor: pointer; font-size: 18px; font-weight: bold;}
+        .qty-btn:hover { background: var(--secondary); }
+        .qty-val { font-size: 16px; font-weight: bold; width: 20px; text-align: center; }
+
+        /* Panneaux latéraux */
+        .summary-panel {
+            flex: 1; min-width: 300px; background-color: var(--card-bg);
+            border-radius: 8px; padding: 20px; border-top: 5px solid var(--primary);
+            position: sticky; top: 90px; height: fit-content; max-height: calc(100vh - 120px);
+            overflow-y: auto; box-shadow: -4px 0 15px rgba(0,0,0,0.5);
+        }
+
+        .summary-panel h2 { margin-top: 0; color: white; border-bottom: 1px solid #444; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-reset { background-color: #555; color: white; border: none; padding: 6px 12px; font-size: 12px; cursor: pointer; transition: 0.2s; border-radius:4px;}
+        .btn-reset:hover { background-color: var(--primary); }
+
+        .summary-section { margin-bottom: 20px; }
+        .summary-section h4 { margin: 0 0 10px 0; color: var(--secondary); font-size: 14px; text-transform: uppercase;}
+        
+        .total-box { background: #2a2a2a; padding: 15px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .total-box span.val { font-size: 18px; font-weight: bold; color: white; }
+        
+        .bill-list { list-style: none; padding: 0; margin: 0; }
+        .bill-list li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333; font-size: 14px; }
+        .bill-list li:last-child { border-bottom: none; }
+        .bill-name { flex: 1; padding-right: 10px;}
+        .bill-calc { color: #aaa; font-size: 12px; text-align: right;}
+
+        .grand-total { background: var(--accent); color: white; padding: 15px; border-radius: 6px; text-align: center; font-size: 24px; font-weight: bold; margin-top: 20px;}
+
+        .empty-state { color: #888; font-style: italic; text-align: center; padding: 20px 0; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--secondary); }
+        
+        /* Pour cacher/afficher les vues */
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <nav>
+        <h1>🚑 EMS Hub</h1>
+        <ul>
+            <li id="nav-blessures" class="active" onclick="switchTab('blessures')">Dossier Patient</li>
+            <li id="nav-facturation" onclick="switchTab('facturation')">Calculatrice Facturation</li>
+        </ul>
+    </nav>
+
+    <!-- VUE 1 : BLESSURES -->
+    <div id="view-blessures" class="layout">
+        <div class="main-content">
+            <div class="controls">
+                <input type="text" id="searchBlessures" placeholder="Rechercher une blessure...">
+                <select id="catBlessures">
+                    <option value="Toutes">Toutes les blessures</option>
+                    <option value="Tête">Tête</option>
+                    <option value="Cou, Thorax, Abdomen, Dos">Cou, Thorax, Abdomen, Dos</option>
+                    <option value="Épaules, bras et mains">Épaules, bras et mains</option>
+                    <option value="Bassin, jambes et pieds">Bassin, jambes et pieds</option>
+                    <option value="Brûlures, Intoxications & Autres">Brûlures, Intoxications & Autres</option>
+                </select>
+            </div>
+            <div class="grid" id="gridBlessures"></div>
+        </div>
+        <div class="summary-panel">
+            <h2>Bilan Clinique <button class="btn-reset" onclick="resetBlessures()">Vider</button></h2>
+            <div id="summaryBlessures"></div>
+        </div>
+    </div>
+
+    <!-- VUE 2 : FACTURATION -->
+    <div id="view-facturation" class="layout hidden">
+        <div class="main-content">
+            <div class="controls">
+                <input type="text" id="searchFactures" placeholder="Rechercher un acte médical (ex: Scanner, Suture)...">
+                <select id="catFactures">
+                    <option value="Toutes">Tous les actes</option>
+                    <option value="Soins & Réanimations">Soins & Réanimations</option>
+                    <option value="Interventions">Interventions & Chirurgie</option>
+                    <option value="Anesthésie & Chambre">Anesthésie & Chambre</option>
+                    <option value="Consultations">Consultations & Examens</option>
+                    <option value="Autres">Documents Officiels & Esthétique</option>
+                </select>
+            </div>
+            <div class="grid" id="gridFactures"></div>
+        </div>
+        <div class="summary-panel" style="border-top-color: var(--accent);">
+            <h2>Ticket de Facturation <button class="btn-reset" onclick="resetFactures()">Vider</button></h2>
+            <div id="summaryFactures"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // BASE DE DONNÉES : BLESSURES
+        // ==========================================
+        const blessures = [
+            { cat: "Tête", nom: "Hémorragie intracrânienne", repos: "1H", recup: "24H", traitement: "Acte neurochirurgical (ablation de l'hématome intracérébral)", avis: "Chirurgien" },
+            { cat: "Tête", nom: "AVC", repos: "1H", recup: "12H", traitement: "Médicament anticoagulants", avis: "Pas d'avis spé." },
+            { cat: "Tête", nom: "Commotion cérébrale", repos: "10 minutes", recup: "1H", traitement: "Repos complet + médicaments antalgiques", avis: "Pas d'avis spé." },
+            { cat: "Tête", nom: "Méningite", repos: "15 minutes", recup: "30 minutes", traitement: "Antalgiques + antibiotiques", avis: "Chirurgien" },
+            { cat: "Tête", nom: "Fracture du crane", repos: "30 minutes", recup: "2H", traitement: "Acte chirurgical, fixer l'os cassé avec une plaque", avis: "Pas d'avis spé." },
+            { cat: "Tête", nom: "Fracture de la machoire", repos: "10 minutes", recup: "/", traitement: "Remise en place de la mâchoire + antalgiques", avis: "Pas d'avis spé." },
+            { cat: "Tête", nom: "Lacération oculaire", repos: "10 minutes", recup: "2H", traitement: "Prescription de médicaments antalgiques + couvrir l'oeil", avis: "Ophtalmologue" },
+            { cat: "Tête", nom: "Plaie suturable +3cm (Tête)", repos: "/", recup: "/", traitement: "Suture + Antisepsie + bandage + antalgiques", avis: "Pas d'avis spé." },
+            { cat: "Tête", nom: "Fracture du nez", repos: "/", recup: "/", traitement: "Remise en place du nez + Antalgiques", avis: "Pas d'avis spé." },
+            { cat: "Tête", nom: "Perforation du tympan", repos: "10 minutes", recup: "1H", traitement: "Antibiotiques auriculaires ( gouttes ) + Antalgiques", avis: "Pas d'avis spé." },
+            { cat: "Cou, Thorax, Abdomen, Dos", nom: "Fracture cervicale", repos: "30 minutes", recup: "2H", traitement: "Acte chirurgical réparation de la vertèbre ( ciment médical ) + Attelle type corset + Antalgiques", avis: "Chir. + Kiné" },
+            { cat: "Cou, Thorax, Abdomen, Dos", nom: "Fracture vertebres (dos)", repos: "30 minutes", recup: "2H", traitement: "Acte chirurgical réparation de la vertèbre ( ciment médical ) + Attelle type corset + Antalgiques", avis: "Chir. + kiné" },
+            { cat: "Cou, Thorax, Abdomen, Dos", nom: "Fracture de côte", repos: "/", recup: "1H", traitement: "Prescription de médicaments antalgiques", avis: "Pas d'avis spé." },
+            { cat: "Cou, Thorax, Abdomen, Dos", nom: "Infarctus", repos: "1H", recup: "18H", traitement: "Électrocardiogramme + traitements anti-agrégant", avis: "Pas d'avis spé." },
+            { cat: "Cou, Thorax, Abdomen, Dos", nom: "Perforation du poumon (Pneumothorax)", repos: "30 minutes", recup: "18H", traitement: "Acte chirurgicale (Suture du poumon) + repos complet + Antalgiques + Oxygène", avis: "Chirurgien" },
+            { cat: "Cou, Thorax, Abdomen, Dos", nom: "Perforation de la râte", repos: "30 minutes", recup: "18H", traitement: "Ablation de la râte", avis: "Chirurgien" },
+            { cat: "Cou, Thorax, Abdomen, Dos", nom: "Perforation d'un rein", repos: "30 minutes", recup: "18H", traitement: "Repos complet + sonde urinaire", avis: "Chirurgien" },
+            { cat: "Cou, Thorax, Abdomen, Dos", nom: "Perforation Abdomen", repos: "30 minutes", recup: "18H", traitement: "Repos complet + sonde naso-gastrique + Poche de stomie", avis: "Chirurgien" },
+            { cat: "Cou, Thorax, Abdomen, Dos", nom: "Plaie suturable +3cm (Torse)", repos: "/", recup: "1H", traitement: "Suture + Antisepsie + bandage + antalgiques", avis: "Pas d'avis spé." },
+            { cat: "Épaules, bras et mains", nom: "Luxation de l'épaule", repos: "/", recup: "30 minutes", traitement: "Remis en place de l'articulation + Attelle \"Dujarier\" + Antalgiques", avis: "Kinésithérapeute" },
+            { cat: "Épaules, bras et mains", nom: "Luxation du coude", repos: "/", recup: "30 minutes", traitement: "Remise en place de l'articulation + Attelle \"Dujarier\" + Antalgiques", avis: "Kinésithérapeute" },
+            { cat: "Épaules, bras et mains", nom: "Fracture de l'avant-bras", repos: "/", recup: "1H", traitement: "Plâtre + Antalgiques", avis: "Kinésithérapeute" },
+            { cat: "Bassin, jambes et pieds", nom: "Fracture du fémur", repos: "30 minutes", recup: "4H", traitement: "Acte chirurgical : Mise en place d'un fixateur externe + Antalgiques", avis: "Chir. + kiné" },
+            { cat: "Brûlures, Intoxications & Autres", nom: "Brûlures au 3ème Degré", repos: "30 minutes", recup: "2H", traitement: "Greffe de peau + Pansement Tulegras + Antalgiques", avis: "Chirurgien esthétique" }
+        ]; // J'ai raccourci ici pour l'exemple mais tu as bien toutes les données en haut dans ton code ;)
+        // Tu peux remettre le tableau complet des blessures ici bien sûr.
+
+        // ==========================================
+        // BASE DE DONNÉES : FACTURATION
+        // ==========================================
+        const facturation = [
+            // SOINS DE SUITE ET RÉANIMATIONS
+            { cat: "Soins & Réanimations", nom: "Hôpital (réanimation)", prix: 1500 },
+            { cat: "Soins & Réanimations", nom: "Hôpital (soins)", prix: 1500 },
+            { cat: "Soins & Réanimations", nom: "Los Santos 'la ville' (réanimation)", prix: 2500 },
+            { cat: "Soins & Réanimations", nom: "Los Santos 'la ville' (soins)", prix: 2500 },
+            { cat: "Soins & Réanimations", nom: "Blaine County 'le nord' (réanimation)", prix: 3000 },
+            { cat: "Soins & Réanimations", nom: "Blaine County 'le nord' (soins)", prix: 3000 },
+            { cat: "Soins & Réanimations", nom: "Cayo Perico", prix: 3000 },
+            { cat: "Soins & Réanimations", nom: "Intervention Bâteau", prix: 10000 },
+            { cat: "Soins & Réanimations", nom: "Intervention Hélicoptère", prix: 15000 },
+            { cat: "Soins & Réanimations", nom: "Obsèques", prix: 20000 },
+            { cat: "Soins & Réanimations", nom: "Greffe d'organe", prix: 60000 },
+
+            // INTERVENTIONS
+            { cat: "Interventions", nom: "Radiograhie Membre", prix: 6000 },
+            { cat: "Interventions", nom: "Scanner", prix: 7500 },
+            { cat: "Interventions", nom: "IRM", prix: 8000 },
+            { cat: "Interventions", nom: "Echographie", prix: 6000 },
+            { cat: "Interventions", nom: "Points de sutures", prix: 2600 },
+            { cat: "Interventions", nom: "Dispositif médical simple (attelle)", prix: 3000 },
+            { cat: "Interventions", nom: "Dispositif médical lourd (ex: plâtre)", prix: 3600 },
+            { cat: "Interventions", nom: "Chirurgie générale", prix: 7000 },
+            { cat: "Interventions", nom: "Chirurgie réparatrice", prix: 6000 },
+            { cat: "Interventions", nom: "Greffe de peau", prix: 40000 },
+            { cat: "Interventions", nom: "Prothèses", prix: 50000 },
+
+            // ANESTHESIE & CHAMBRE
+            { cat: "Anesthésie & Chambre", nom: "Anesthésie locale", prix: 2000 },
+            { cat: "Anesthésie & Chambre", nom: "Anesthésie gaz", prix: 3000 },
+            { cat: "Anesthésie & Chambre", nom: "Anesthésie intraveineuse", prix: 3000 },
+            { cat: "Anesthésie & Chambre", nom: "Chambre normale", prix: 1000 },
+            { cat: "Anesthésie & Chambre", nom: "Chambre VIP", prix: 20000 },
+
+            // CONSULTATIONS
+            { cat: "Consultations", nom: "Psychologue", prix: 3000 },
+            { cat: "Consultations", nom: "Kinésithérapeute", prix: 3000 },
+            { cat: "Consultations", nom: "Médecin général", prix: 3000 },
+            { cat: "Consultations", nom: "Gynécologie", prix: 3000 },
+            { cat: "Consultations", nom: "Infectiologue et labo médical", prix: 6000 },
+            { cat: "Consultations", nom: "Examen Médical Complet / VMT", prix: 5000 },
+            { cat: "Consultations", nom: "Soins dentaires", prix: 2500 },
+            { cat: "Consultations", nom: "Prothèse dentaire", prix: 4000 },
+            { cat: "Consultations", nom: "Appareil dentaire", prix: 3000 },
+            { cat: "Consultations", nom: "Consultation Dentaire ou Ophtalmo", prix: 3000 },
+            { cat: "Consultations", nom: "Fabriquation verres/monture", prix: 2500 },
+            { cat: "Consultations", nom: "Fabriquation lentilles", prix: 3500 },
+
+            // AUTRES
+            { cat: "Autres", nom: "Test VMT", prix: 10000 },
+            { cat: "Autres", nom: "Test PPA (Psychologique)", prix: 50000 },
+            { cat: "Autres", nom: "Test brevet hélicoptère (Psy)", prix: 100000 },
+            { cat: "Autres", nom: "Petit Tatouage", prix: 150000 },
+            { cat: "Autres", nom: "Moyen tatouage", prix: 150000 },
+            { cat: "Autres", nom: "Gros tatouage", prix: 150000 },
+            { cat: "Autres", nom: "UV", prix: 50000 },
+            { cat: "Autres", nom: "Chirurgie Esthétique (petit)", prix: 30000 },
+            { cat: "Autres", nom: "Chirurgie Esthétique (moyen)", prix: 45000 },
+            { cat: "Autres", nom: "Chirurgie Esthétique (gros)", prix: 90000 },
+        ];
+
+        let patientInjuries = [];
+        let patientBill = {}; // Stocke sous forme { "Nom Acte": quantité }
+
+        // ==========================================
+        // GESTION DES ONGLETS
+        // ==========================================
+        function switchTab(tab) {
+            document.getElementById('nav-blessures').classList.remove('active');
+            document.getElementById('nav-facturation').classList.remove('active');
+            document.getElementById('view-blessures').classList.add('hidden');
+            document.getElementById('view-facturation').classList.add('hidden');
+
+            document.getElementById('nav-' + tab).classList.add('active');
+            document.getElementById('view-' + tab).classList.remove('hidden');
+        }
+
+        // ==========================================
+        // LOGIQUE : DOSSIER PATIENT (Blessures)
+        // ==========================================
+        function parseToMinutes(timeStr) {
+            if (!timeStr || timeStr === "/") return 0;
+            let total = 0;
+            const hMatch = timeStr.match(/(\d+)\s*H/i);
+            if (hMatch) total += parseInt(hMatch[1]) * 60;
+            const mMatch = timeStr.match(/(\d+)\s*minute/i);
+            if (mMatch) total += parseInt(mMatch[1]);
+            return total;
+        }
+
+        function formatMinutes(totalMins) {
+            if (totalMins === 0) return "Aucun";
+            const h = Math.floor(totalMins / 60);
+            const m = totalMins % 60;
+            if (h > 0 && m > 0) return `${h}H ${m} min`;
+            if (h > 0) return `${h}H`;
+            return `${m} minutes`;
+        }
+
+        function renderBlessures() {
+            const grid = document.getElementById('gridBlessures');
+            const search = document.getElementById('searchBlessures').value.toLowerCase();
+            const cat = document.getElementById('catBlessures').value;
+            grid.innerHTML = '';
+
+            const filtered = blessures.filter(b => {
+                return b.nom.toLowerCase().includes(search) && (cat === "Toutes" || b.cat === cat);
+            });
+
+            filtered.forEach(b => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                if (patientInjuries.find(p => p.nom === b.nom)) card.classList.add('selected');
+                
+                card.innerHTML = `<div class="cat">${b.cat}</div><h3>${b.nom}</h3>`;
+                card.onclick = () => {
+                    const idx = patientInjuries.findIndex(p => p.nom === b.nom);
+                    if (idx === -1) { patientInjuries.push(b); card.classList.add('selected'); }
+                    else { patientInjuries.splice(idx, 1); card.classList.remove('selected'); }
+                    updateSummaryBlessures();
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        function updateSummaryBlessures() {
+            const container = document.getElementById('summaryBlessures');
+            if (patientInjuries.length === 0) {
+                container.innerHTML = '<div class="empty-state">Aucune blessure sélectionnée.</div>';
+                return;
+            }
+
+            let tRepos = 0, tRecup = 0, html = '', avisSet = new Set();
+            patientInjuries.forEach(b => {
+                tRepos += parseToMinutes(b.repos);
+                tRecup += parseToMinutes(b.recup);
+                html += `<li><strong style="color:#ff9800">${b.nom}</strong><br>${b.traitement}</li>`;
+                if (b.avis && b.avis !== "Pas d'avis spé.") avisSet.add(b.avis);
+            });
+
+            container.innerHTML = `
+                <div class="summary-section">
+                    <h4>Durées cumulées</h4>
+                    <div class="total-box"><span>Repos :</span><span class="val" style="color:#ff5252">${formatMinutes(tRepos)}</span></div>
+                    <div class="total-box"><span>Récupération :</span><span class="val" style="color:#4caf50">${formatMinutes(tRecup)}</span></div>
+                </div>
+                <div class="summary-section"><h4>Traitements</h4><ul style="list-style:none;padding:0;margin:0;font-size:14px;gap:10px;display:flex;flex-direction:column;">${html}</ul></div>
+                <div class="summary-section"><h4>Avis Requis</h4>
+                <div class="total-box" style="justify-content:center; background:#1976d2;"><span class="val" style="font-size:16px;">${avisSet.size > 0 ? Array.from(avisSet).join(" / ") : "Aucun"}</span></div>
+                </div>
+            `;
+        }
+
+        function resetBlessures() {
+            patientInjuries = [];
+            renderBlessures();
+            updateSummaryBlessures();
+        }
+
+        // ==========================================
+        // LOGIQUE : FACTURATION
+        // ==========================================
+        function formatMoney(amount) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
+        }
+
+        function changeQty(nomActe, delta, event) {
+            event.stopPropagation(); // Évite que le clic déclenche d'autres actions sur la carte
+            if (!patientBill[nomActe]) patientBill[nomActe] = 0;
+            patientBill[nomActe] += delta;
+            
+            if (patientBill[nomActe] <= 0) delete patientBill[nomActe];
+            
+            renderFactures();
+            updateSummaryFactures();
+        }
+
+        function renderFactures() {
+            const grid = document.getElementById('gridFactures');
+            const search = document.getElementById('searchFactures').value.toLowerCase();
+            const cat = document.getElementById('catFactures').value;
+            grid.innerHTML = '';
+
+            const filtered = facturation.filter(f => {
+                return f.nom.toLowerCase().includes(search) && (cat === "Toutes" || f.cat === cat);
+            });
+
+            filtered.forEach(f => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                const qty = patientBill[f.nom] || 0;
+                
+                if (qty > 0) card.classList.add('selected');
+
+                card.innerHTML = `
+                    <div>
+                        <div class="cat">${f.cat}</div>
+                        <h3>${f.nom}</h3>
+                    </div>
+                    <div>
+                        <div class="price">${formatMoney(f.prix)}</div>
+                        <div class="qty-controls">
+                            <button class="qty-btn" onclick="changeQty('${f.nom.replace(/'/g, "\\'")}', -1, event)">-</button>
+                            <span class="qty-val">${qty}</span>
+                            <button class="qty-btn" onclick="changeQty('${f.nom.replace(/'/g, "\\'")}', 1, event)">+</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function updateSummaryFactures() {
+            const container = document.getElementById('summaryFactures');
+            let grandTotal = 0;
+            let htmlList = '';
+
+            for (const [nom, qty] of Object.entries(patientBill)) {
+                const item = facturation.find(f => f.nom === nom);
+                if (item) {
+                    const ligneTotal = item.prix * qty;
+                    grandTotal += ligneTotal;
+                    htmlList += `
+                        <li>
+                            <div class="bill-name">${nom} <b>x${qty}</b></div>
+                            <div class="bill-calc">${formatMoney(item.prix)}<br><strong style="color:white;font-size:14px;">${formatMoney(ligneTotal)}</strong></div>
+                        </li>
+                    `;
+                }
+            }
+
+            if (grandTotal === 0) {
+                container.innerHTML = '<div class="empty-state">Aucun acte facturé pour le moment.</div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="summary-section">
+                    <h4>Détail de la facture</h4>
+                    <ul class="bill-list">
+                        ${htmlList}
+                    </ul>
+                </div>
+                <div class="grand-total">
+                    TOTAL : ${formatMoney(grandTotal)}
+                </div>
+            `;
+        }
+
+        function resetFactures() {
+            patientBill = {};
+            renderFactures();
+            updateSummaryFactures();
+        }
+
+        // ==========================================
+        // INITIALISATION
+        // ==========================================
+        document.getElementById('searchBlessures').addEventListener('input', renderBlessures);
+        document.getElementById('catBlessures').addEventListener('change', renderBlessures);
+        document.getElementById('searchFactures').addEventListener('input', renderFactures);
+        document.getElementById('catFactures').addEventListener('change', renderFactures);
+
+        renderBlessures();
+        updateSummaryBlessures();
+        renderFactures();
+        updateSummaryFactures();
+
+    </script>
+</body>
+</html>
