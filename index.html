@@ -89,14 +89,12 @@
         .card h3 { margin: 0 0 5px 0; color: white; font-size: 16px; line-height: 1.3;}
         .card .cat { font-size: 11px; color: #aaa; text-transform: uppercase; margin-bottom: 5px; }
 
-        /* Styles spécifiques à la facturation */
         .card .price { font-weight: bold; color: var(--accent); margin-top: 10px; font-size: 18px;}
         .qty-controls { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
         .qty-btn { background: #444; border: none; color: white; border-radius: 4px; width: 30px; height: 30px; cursor: pointer; font-size: 18px; font-weight: bold;}
         .qty-btn:hover { background: var(--secondary); }
         .qty-val { font-size: 16px; font-weight: bold; width: 20px; text-align: center; }
 
-        /* Panneaux latéraux */
         .summary-panel {
             flex: 1; min-width: 300px; background-color: var(--card-bg);
             border-radius: 8px; padding: 20px; border-top: 5px solid var(--primary);
@@ -129,7 +127,6 @@
         ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--secondary); }
         
-        /* Pour cacher/afficher les vues */
         .hidden { display: none !important; }
 
     </style>
@@ -190,9 +187,10 @@
 
     <script>
         // ==========================================
-        // BASE DE DONNÉES : BLESSURES
+        // BASE DE DONNÉES COMPLÈTE : BLESSURES
         // ==========================================
         const blessures = [
+            // TÊTE
             { cat: "Tête", nom: "Hémorragie intracrânienne", repos: "1H", recup: "24H", traitement: "Acte neurochirurgical (ablation de l'hématome intracérébral)", avis: "Chirurgien" },
             { cat: "Tête", nom: "AVC", repos: "1H", recup: "12H", traitement: "Médicament anticoagulants", avis: "Pas d'avis spé." },
             { cat: "Tête", nom: "Commotion cérébrale", repos: "10 minutes", recup: "1H", traitement: "Repos complet + médicaments antalgiques", avis: "Pas d'avis spé." },
@@ -203,6 +201,8 @@
             { cat: "Tête", nom: "Plaie suturable +3cm (Tête)", repos: "/", recup: "/", traitement: "Suture + Antisepsie + bandage + antalgiques", avis: "Pas d'avis spé." },
             { cat: "Tête", nom: "Fracture du nez", repos: "/", recup: "/", traitement: "Remise en place du nez + Antalgiques", avis: "Pas d'avis spé." },
             { cat: "Tête", nom: "Perforation du tympan", repos: "10 minutes", recup: "1H", traitement: "Antibiotiques auriculaires ( gouttes ) + Antalgiques", avis: "Pas d'avis spé." },
+
+            // COU, THORAX, ABDOMEN, DOS
             { cat: "Cou, Thorax, Abdomen, Dos", nom: "Fracture cervicale", repos: "30 minutes", recup: "2H", traitement: "Acte chirurgical réparation de la vertèbre ( ciment médical ) + Attelle type corset + Antalgiques", avis: "Chir. + Kiné" },
             { cat: "Cou, Thorax, Abdomen, Dos", nom: "Fracture vertebres (dos)", repos: "30 minutes", recup: "2H", traitement: "Acte chirurgical réparation de la vertèbre ( ciment médical ) + Attelle type corset + Antalgiques", avis: "Chir. + kiné" },
             { cat: "Cou, Thorax, Abdomen, Dos", nom: "Fracture de côte", repos: "/", recup: "1H", traitement: "Prescription de médicaments antalgiques", avis: "Pas d'avis spé." },
@@ -210,18 +210,53 @@
             { cat: "Cou, Thorax, Abdomen, Dos", nom: "Perforation du poumon (Pneumothorax)", repos: "30 minutes", recup: "18H", traitement: "Acte chirurgicale (Suture du poumon) + repos complet + Antalgiques + Oxygène", avis: "Chirurgien" },
             { cat: "Cou, Thorax, Abdomen, Dos", nom: "Perforation de la râte", repos: "30 minutes", recup: "18H", traitement: "Ablation de la râte", avis: "Chirurgien" },
             { cat: "Cou, Thorax, Abdomen, Dos", nom: "Perforation d'un rein", repos: "30 minutes", recup: "18H", traitement: "Repos complet + sonde urinaire", avis: "Chirurgien" },
-            { cat: "Cou, Thorax, Abdomen, Dos", nom: "Perforation Abdomen", repos: "30 minutes", recup: "18H", traitement: "Repos complet + sonde naso-gastrique + Poche de stomie", avis: "Chirurgien" },
+            { cat: "Cou, Thorax, Abdomen, Dos", nom: "Perforation Abdomen (Foie,Estomac, Intestin)", repos: "30 minutes", recup: "18H", traitement: "Repos complet + sonde naso-gastrique + Poche de stomie", avis: "Chirurgien" },
             { cat: "Cou, Thorax, Abdomen, Dos", nom: "Plaie suturable +3cm (Torse)", repos: "/", recup: "1H", traitement: "Suture + Antisepsie + bandage + antalgiques", avis: "Pas d'avis spé." },
+
+            // EPAULES BRAS MAINS
             { cat: "Épaules, bras et mains", nom: "Luxation de l'épaule", repos: "/", recup: "30 minutes", traitement: "Remis en place de l'articulation + Attelle \"Dujarier\" + Antalgiques", avis: "Kinésithérapeute" },
             { cat: "Épaules, bras et mains", nom: "Luxation du coude", repos: "/", recup: "30 minutes", traitement: "Remise en place de l'articulation + Attelle \"Dujarier\" + Antalgiques", avis: "Kinésithérapeute" },
-            { cat: "Épaules, bras et mains", nom: "Fracture de l'avant-bras", repos: "/", recup: "1H", traitement: "Plâtre + Antalgiques", avis: "Kinésithérapeute" },
+            { cat: "Épaules, bras et mains", nom: "Luxation omoplate", repos: "/", recup: "30 minutes", traitement: "Remise en place de l'articulation + Attelle \"Dujarier\" + Antalgiques", avis: "Kinésithérapeute" },
+            { cat: "Épaules, bras et mains", nom: "Fracture de l'omoplate", repos: "/", recup: "1H", traitement: "Acte chirurgical : Pose d'une plaque pour refixer l'os + Antalgiques + Attelle \"Dujarier\"", avis: "Kinésithérapeute" },
+            { cat: "Épaules, bras et mains", nom: "Fracture de la clavicule", repos: "/", recup: "1H", traitement: "Acte chirurgical : Pose d'une plaque pour refixer l'os + Antalgiques + Attelle \"Dujarier\"", avis: "Kinésithérapeute" },
+            { cat: "Épaules, bras et mains", nom: "Fracture de l'avant-bras (Radius/Cubitus)", repos: "/", recup: "1H", traitement: "Plâtre + Antalgiques", avis: "Kinésithérapeute" },
+            { cat: "Épaules, bras et mains", nom: "Fracture du bras (humerus)", repos: "/", recup: "1H", traitement: "Plâtre + Antalgiques", avis: "Kinésithérapeute" },
+            { cat: "Épaules, bras et mains", nom: "Fracture des doigts de la main", repos: "/", recup: "/", traitement: "Attelle grenouille + Antalgiques", avis: "Pas d'avis spé." },
+            { cat: "Épaules, bras et mains", nom: "Fracture du poignet", repos: "/", recup: "1H", traitement: "Plâtre + Antalgiques", avis: "Kinésithérapeute" },
+            { cat: "Épaules, bras et mains", nom: "Section partielle des doigts de la main", repos: "30 minutes", recup: "2H", traitement: "Acte chirurgical : remise en place des doigts + suture + antiseptie + Attelle grenouille", avis: "Chir. + kiné" },
+            { cat: "Épaules, bras et mains", nom: "Plaie suturable +3cm (Bras)", repos: "/", recup: "30 minutes", traitement: "Suture + Antisepsie + bandage + antalgiques", avis: "Pas d'avis spé." },
+
+            // BASSIN JAMBES PIEDS
+            { cat: "Bassin, jambes et pieds", nom: "Rupture des ligaments croisés", repos: "10 minutes", recup: "1H", traitement: "Acte chirurgical : Suture des ligaments + Attelle de \"Zimmer\" + Antalgiques", avis: "Chir. + kiné" },
+            { cat: "Bassin, jambes et pieds", nom: "Rupture des ligaments latéraux", repos: "10 minutes", recup: "1H", traitement: "Acte chirurgical : Suture des ligaments + Attelle de \"Zimmer\" + Antalgiques", avis: "Chir. + kiné" },
+            { cat: "Bassin, jambes et pieds", nom: "Luxation du genou", repos: "/", recup: "30 minutes", traitement: "Remise en place de l'articulation + Attelle de \"Zimmer\" + Antalgiques", avis: "Kinésithérapeute" },
+            { cat: "Bassin, jambes et pieds", nom: "Fracture du genou", repos: "/", recup: "1H", traitement: "Acte chirurgical : Pose d'une plaque pour refixer l'os + Attelle de \"Zimmer\" + Antalgiques", avis: "Kinésithérapeute" },
             { cat: "Bassin, jambes et pieds", nom: "Fracture du fémur", repos: "30 minutes", recup: "4H", traitement: "Acte chirurgical : Mise en place d'un fixateur externe + Antalgiques", avis: "Chir. + kiné" },
-            { cat: "Brûlures, Intoxications & Autres", nom: "Brûlures au 3ème Degré", repos: "30 minutes", recup: "2H", traitement: "Greffe de peau + Pansement Tulegras + Antalgiques", avis: "Chirurgien esthétique" }
-        ]; // J'ai raccourci ici pour l'exemple mais tu as bien toutes les données en haut dans ton code ;)
-        // Tu peux remettre le tableau complet des blessures ici bien sûr.
+            { cat: "Bassin, jambes et pieds", nom: "Fracture du bassin", repos: "30 minutes", recup: "2H", traitement: "Acte chirugical : Pose d'une plaque pour refixer l'os + Antalgique + ceinture pelvienne", avis: "Chir. + kiné" },
+            { cat: "Bassin, jambes et pieds", nom: "Fracture du col du fémur", repos: "10 minutes", recup: "1H", traitement: "Acte chirurgical : Pose d'une prothèse de hanche + Antalgique", avis: "Chir. + kiné" },
+            { cat: "Bassin, jambes et pieds", nom: "Fracture tibia", repos: "/", recup: "1H", traitement: "Plâtre + Antalgiques", avis: "Kinésithérapeute" },
+            { cat: "Bassin, jambes et pieds", nom: "Fracture péroné", repos: "/", recup: "1H", traitement: "Plâtre + Antalgiques", avis: "Kinésithérapeute" },
+            { cat: "Bassin, jambes et pieds", nom: "Fracture cheville", repos: "/", recup: "1H", traitement: "Plâtre + Antalgiques", avis: "Kinésithérapeute" },
+            { cat: "Bassin, jambes et pieds", nom: "Rupture du tendon d'Achille", repos: "/", recup: "30 minutes", traitement: "Acte chirurgical : Suture du tendon + Antalgiques", avis: "Chir. + kiné" },
+            { cat: "Bassin, jambes et pieds", nom: "Fracture du coccyx", repos: "30 minutes", recup: "1H", traitement: "Acte chirurgical : Pose d'une plaque pour refixer l'os + Antalgiques", avis: "Chir. + kiné" },
+            { cat: "Bassin, jambes et pieds", nom: "Section partielle des doigts du pied", repos: "30 minutes", recup: "2H", traitement: "Acte chirurgical : remise en place des doigts + suture + antiseptie + Attelle grenouille", avis: "Chirurgien" },
+            { cat: "Bassin, jambes et pieds", nom: "Fracture des doigts de pieds", repos: "/", recup: "/", traitement: "Antalgiques", avis: "Pas d'avis spé." },
+            { cat: "Bassin, jambes et pieds", nom: "Plaie suturable +3cm (Jambes)", repos: "/", recup: "30 minutes", traitement: "Suture + Antisepsie + bandage + antalgiques", avis: "Pas d'avis spé." },
+            { cat: "Bassin, jambes et pieds", nom: "Torsion testiculaire", repos: "15 minutes", recup: "1H", traitement: "Acte chirurgical : Remettre la testicule à l'endroit", avis: "Chirurgien" },
+
+            // BRULURES INTOXICATIONS
+            { cat: "Brûlures, Intoxications & Autres", nom: "Brûlures au 2ème Degré", repos: "15 minutes", recup: "30 minutes", traitement: "Pansement \"tulegras\" + anti-inflammatoires + Antalgiques", avis: "Chirurgien esthétique" },
+            { cat: "Brûlures, Intoxications & Autres", nom: "Brûlures au 3ème Degré", repos: "30 minutes", recup: "2H", traitement: "Greffe de peau + Pansement Tulegras + Antalgiques", avis: "Chirurgien esthétique" },
+            { cat: "Brûlures, Intoxications & Autres", nom: "Overdose", repos: "30 minutes", recup: "3H", traitement: "Seringue de \"Naloxone\"", avis: "Psychologue" },
+            { cat: "Brûlures, Intoxications & Autres", nom: "Intoxication par stupéfiant", repos: "15 minutes", recup: "1H", traitement: "Perfusion d'hydratation (NACL)", avis: "Psychologue" },
+            { cat: "Brûlures, Intoxications & Autres", nom: "Intoxication par alcool", repos: "15 minutes", recup: "1H", traitement: "Perfusion d'hydratation (NACL)", avis: "Psychologue" },
+            { cat: "Brûlures, Intoxications & Autres", nom: "Crise d'asthme", repos: "15 minutes", recup: "1H", traitement: "Oxygène + bronchodilatateur", avis: "Pas d'avis spé." },
+            { cat: "Brûlures, Intoxications & Autres", nom: "Hypothermie sévère", repos: "20 minutes", recup: "/", traitement: "Réchauffage", avis: "Pas d'avis spé." },
+            { cat: "Brûlures, Intoxications & Autres", nom: "Noyade", repos: "/", recup: "30 minutes", traitement: "Réchauffage + Oxygène", avis: "Pas d'avis spé." }
+        ];
 
         // ==========================================
-        // BASE DE DONNÉES : FACTURATION
+        // BASE DE DONNÉES COMPLÈTE : FACTURATION
         // ==========================================
         const facturation = [
             // SOINS DE SUITE ET RÉANIMATIONS
@@ -281,11 +316,11 @@
             { cat: "Autres", nom: "UV", prix: 50000 },
             { cat: "Autres", nom: "Chirurgie Esthétique (petit)", prix: 30000 },
             { cat: "Autres", nom: "Chirurgie Esthétique (moyen)", prix: 45000 },
-            { cat: "Autres", nom: "Chirurgie Esthétique (gros)", prix: 90000 },
+            { cat: "Autres", nom: "Chirurgie Esthétique (gros)", prix: 90000 }
         ];
 
         let patientInjuries = [];
-        let patientBill = {}; // Stocke sous forme { "Nom Acte": quantité }
+        let patientBill = {}; 
 
         // ==========================================
         // GESTION DES ONGLETS
@@ -390,7 +425,7 @@
         }
 
         function changeQty(nomActe, delta, event) {
-            event.stopPropagation(); // Évite que le clic déclenche d'autres actions sur la carte
+            event.stopPropagation();
             if (!patientBill[nomActe]) patientBill[nomActe] = 0;
             patientBill[nomActe] += delta;
             
